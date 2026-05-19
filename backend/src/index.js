@@ -24,43 +24,35 @@ initializeSocket(server);
 const PORT = process.env.PORT || 3005;
 const __dirname = path.resolve();
 
-
 // Security
 app.use(helmet());
-
 
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-
 // CORS
 app.use(
   cors({
     origin: process.env.ORIGIN,
     credentials: true,
-    methods : ["POST" , "GET" , "PUT" , "DELETE"], 
-  })
+    methods: ["POST", "GET", "PUT", "DELETE"],
+  }),
 );
-
 
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
-
 // Production frontend
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-  app.get("*", (req, res) => {
-    res.sendFile(
-      path.join(__dirname, "../frontend/dist/index.html")
-    );
+  app.get("/*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
   });
 }
-
 
 // 404
 app.use((req, res) => {
@@ -70,10 +62,8 @@ app.use((req, res) => {
   });
 });
 
-
 // Global Error Handler
 app.use(errorMiddleware);
-
 
 // Start Server
 const startServer = async () => {
@@ -90,4 +80,3 @@ const startServer = async () => {
 };
 
 startServer();
-
