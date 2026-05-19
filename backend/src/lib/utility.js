@@ -9,16 +9,22 @@ import jwt from "jsonwebtoken";
 // signature -> acutal secret token
 
 export const generateToken = (userId, res) => {
-  // here userId is passed for payload
-
-  const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
-  });
+  const token = jwt.sign(
+    { userId },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "7d",
+    }
+  );
 
   res.cookie("jwt", token, {
-    httpOnly: true, // only http requests prevent XSS attacks i.e cross-site scripting
-    maxAge: 7 * 24 * 60 * 60 * 1000, // cookie age
-    sameSite: "strict", // forgery cross site requests
-    secure: process.env.NODE_ENV !== "development", // secure ony in production
+    httpOnly: true,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
   });
+
+  return token;
 };
+
+

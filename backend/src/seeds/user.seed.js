@@ -2,11 +2,14 @@ import { config } from "dotenv";
 import { connectDB } from "../lib/db.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
+import Message from "../models/message.model.js";
 
 config();
 
 const salt = await bcrypt.genSalt(10);
-const password = await bcrypt.hash("123456", salt);
+const password = await bcrypt.hash("Password1", salt);
+
+
 
 const seedUsers = [
   // Female Users
@@ -114,6 +117,9 @@ const seedDatabase = async () => {
   try {
     await connectDB();
 
+    await User.deleteMany({});
+    await Message.deleteMany({});
+
     await User.insertMany(seedUsers);
     console.log("Database seeded successfully");
   } catch (error) {
@@ -122,4 +128,5 @@ const seedDatabase = async () => {
 };
 
 // Call the function
-seedDatabase();
+seedDatabase().then(() => console.log("Done")
+);

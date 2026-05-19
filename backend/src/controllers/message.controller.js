@@ -37,33 +37,45 @@ export const getMessages = async (req, res) => {
   }
 };
 
+import { uploadOnCloudinary } from "../lib/cloudinary.js";
+
 export const sendMessage = async (req, res) => {
   try {
     const myId = req.user._id;
-    const { text, image } = req.body;
+    const { text } = req.body;
     const chatToId = req.params.id;
 
     let imageUrl = "";
 
-    if (image) {
-      const upload = await cloudinary.uploader.upload(image);
-      imageUrl = upload.secure_url;
+    if (req.file) {
+      const uploadResult = await uploadOnCloudinary(req.file.path);
+
+      if (uploadResult) {
+        imageUrl = uploadResult.secure_url;
+      }
     }
 
-    const newMessage = await Message({
+    const newMessage = new Message({
       senderId: myId,
       receiverId: chatToId,
       text,
       image: imageUrl,
     });
+
     await newMessage.save();
 
     const receiverSocketId = getReceiverSocketId(chatToId);
-    if (receiverSocketId)
+
+    if (receiverSocketId) {
       io.to(receiverSocketId).emit("newMessage", newMessage);
+    }
 
     res.status(201).json(newMessage);
   } catch (error) {
-    console.log("Error in send message controller", error.message);
+    console.log("Error in sendMessage controller", error.message);
+
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
   }
 };

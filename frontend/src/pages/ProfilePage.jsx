@@ -7,19 +7,17 @@ function ProfilePage() {
 
   const [selectedImg, setSelectedImg] = useState(null);
 
-  const handleImageUpload = (event) => {
+  const handleImageUpload = async (event) => {
     const file = event.target.files[0];
+
     if (!file) return;
 
-    const reader = new FileReader();
+    setSelectedImg(URL.createObjectURL(file));
 
-    reader.readAsDataURL(file);
+    const formData = new FormData();
+    formData.append("profilePic", file);
 
-    reader.onload = async () => {
-      setSelectedImg(reader.result);
-      const base64Img = reader.result;
-      await updateProfile({ profilePic: base64Img });
-    };
+    await updateProfile(formData);
   };
   return (
     <div className="h-screen pt-20">

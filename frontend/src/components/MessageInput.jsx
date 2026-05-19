@@ -4,6 +4,7 @@ import { useChatStore } from "../store/useChatStore.js";
 
 function MessageInput() {
   const [text, setText] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const fileInputRef = useRef();
 
@@ -11,41 +12,61 @@ function MessageInput() {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
+
+    if (!file) return;
+
     if (!file.type.startsWith("image/")) {
-      toast.error("Please select and image file");
+      toast.error("Please select an image file");
       return;
     }
 
-    const reader = new FileReader();
+    setSelectedImage(file);
 
-    reader.readAsDataURL(file);
+    const previewUrl = URL.createObjectURL(file);
 
-    reader.onload = () => {
-      setImagePreview(reader.result);
-    };
+    setImagePreview(previewUrl);
   };
 
   const removeImage = () => {
+    setSelectedImage(null);
     setImagePreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleSendMessage = async (event) => {
     event.preventDefault();
-    if (!text.trim() && !imagePreview) return;
+
+    console.log(text);
+    console.log(selectedImage);
+
+    if (!text.trim() && !selectedImage) return;
 
     try {
-      await sendMessage({ text: text, image: imagePreview });
+      const formData = new FormData();
 
-      // clear form
+      formData.append("text", text);
+
+      if (selectedImage) {
+        formData.append("image", selectedImage);
+      }
+
+      await sendMessage(formData);
 
       setText("");
+      setSelectedImage(null);
       setImagePreview(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     } catch (error) {
       console.log("Failed to send message");
     }
   };
+
   return (
     <div className="p-4 w-full">
       {imagePreview && (

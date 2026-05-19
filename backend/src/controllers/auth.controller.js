@@ -51,18 +51,23 @@ export const signup = async (req, res) => {
 
 export const login = async (req, res) => {
   const { email, password } = req.body;
+
   try {
-    if (!email || !password)
+    if (!email || !password) {
       return res.status(400).json({ message: "All fields are required" });
+    }
 
     const user = await User.findOne({ email });
 
-    if (!user) return res.status(400).json({ message: "Invalid credentials" });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
-    if (!isPasswordCorrect)
+    if (!isPasswordCorrect) {
       return res.status(400).json({ message: "Invalid credentials" });
+    }
 
     generateToken(user._id, res);
 
@@ -73,7 +78,8 @@ export const login = async (req, res) => {
       profilePic: user.profilePic,
     });
   } catch (error) {
-    console.log("Error in login controller");
+    console.log("Error in login controller", error.message);
+
     return res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -84,7 +90,7 @@ export const logout = (req, res) => {
       httpOnly: true, // only http requests prevent XSS attacks i.e cross-site scripting
       maxAge: 0, // cookie age
       sameSite: "strict", // forgery cross site requests
-      secure: process.env.NODE_ENV !== "Development", // secure ony in production
+      secure: process.env.NODE_ENV === "prodution", // secure ony in production
     });
     res.status(200).json({ messsage: "Logged out successfully" });
   } catch (error) {
@@ -92,33 +98,43 @@ export const logout = (req, res) => {
   }
 };
 
+import { uploadOnCloudinary } from "../lib/cloudinary.js";
+
 export const updateProfile = async (req, res) => {
   try {
-    const { profilePic } = req.body;
-
-    if (!profilePic)
-      return res.status(400).json({ message: "Profile pic is required" });
-
     const userId = req.user._id;
 
-    const uploadResponse = await cloudinary.uploader.upload(profilePic);
+    if (!req.file) {
+      return res.status(400).json({
+        message: "No image uploaded",
+      });
+    }
 
-    const updateUser = await User.findByIdAndUpdate(
+    const uploadResult = await uploadOnCloudinary(req.file.path);
+
+    if (!uploadResult) {
+      return res.status(500).json({
+        message: "Image upload failed",
+      });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
-        profilePic: uploadResponse.secure_url,
+        profilePic: uploadResult.secure_url,
       },
-      { new: true }
+      {
+        returnDocument: "after",
+      },
     );
 
-    if (!updateUser)
-      return res.status(500).json({ message: "Internal server error" });
-
-    res.status(200).json(updateUser);
-    console.log(res);
+    res.status(200).json(updatedUser);
   } catch (error) {
-    console.log("Error in update profile controller");
-    res.status(500).json({ message: "Internal Server error" });
+    console.log("Error in updateProfile controller", error.message);
+
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
   }
 };
 

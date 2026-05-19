@@ -17,7 +17,10 @@ export const useAuthStore = create((set, get) => ({
 
   checkAuth: async () => {
     try {
+      set({ isCheckingAuth: true });
+      console.log("Reached auth store");
       const res = await axiosInstance.get("/auth/check");
+      console.log("got data : ", res);
       set({ authUser: res.data });
       get().connectSocket();
     } catch (error) {
@@ -31,6 +34,7 @@ export const useAuthStore = create((set, get) => ({
   signup: async (data) => {
     try {
       set({ isSigningUp: true });
+
       const res = await axiosInstance.post("/auth/signup", data);
       toast.success("Account created successfully");
       set({ authUser: res.data });
@@ -45,11 +49,14 @@ export const useAuthStore = create((set, get) => ({
   login: async (data) => {
     try {
       set({ isLoggingIn: true });
+      console.log(data);
+
       const res = await axiosInstance.post("/auth/login", data);
       set({ authUser: res.data });
       toast.success("Login successful!");
       get().connectSocket();
     } catch (error) {
+      console.dir(error);
       toast.error(error.response?.data?.message || "Login failed!");
     } finally {
       set({ isLoggingIn: false });
@@ -66,15 +73,20 @@ export const useAuthStore = create((set, get) => ({
       toast.error(error.response?.data?.message || "Logout failed!");
     }
   },
-  updateProfile: async (data) => {
+
+  updateProfile: async (formData) => {
     try {
       set({ isUpdatingProfile: true });
-      const res = await axiosInstance.put("/auth/update-profile", data);
+
+      const res = await axiosInstance.put("/auth/update-profile", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       set({ authUser: res.data });
-      toast.success("Profile updated successfully!");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Profile update failed!");
+      console.log(error);
     } finally {
       set({ isUpdatingProfile: false });
     }
@@ -85,9 +97,7 @@ export const useAuthStore = create((set, get) => ({
     if (!authUser || get().socket?.connected) return;
 
     const socket = io(baseURL, {
-      query: {
-        userId: authUser._id,
-      },
+      withCredentials: true,
     });
 
     socket.connect();
