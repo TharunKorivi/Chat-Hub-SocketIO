@@ -7,12 +7,6 @@ let io;
 // Map<userId, Set<socketId>>
 const userSocketMap = new Map();
 
-export const getReceiverSocketId = (receiverId) => {
-  const sockets = userSocketMap.get(receiverId);
-  if (!sockets || sockets.size === 0) return null;
-  return [...sockets][0];
-};
-
 export const emitToUser = (receiverId, event, data) => {
   const sockets = userSocketMap.get(receiverId);
   if (!sockets) return;
