@@ -25,7 +25,20 @@ const PORT = process.env.PORT || 3005;
 const __dirname = path.resolve();
 
 // Security
-app.use(helmet());
+// Security
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        connectSrc: ["'self'", process.env.ORIGIN],
+      },
+    },
+  }),
+);
 
 // Middlewares
 app.use(express.json());
